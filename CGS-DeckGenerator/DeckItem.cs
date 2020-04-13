@@ -56,6 +56,12 @@ namespace CGS_DeckGenerator
         {
             try
             {
+                const int MAX_CARDS = 70;
+                const int border = 5;
+                
+                int deckIndx;
+                Brush borderBrush;
+
                 int width_dimension = CARD_WID * RES_MULTIPLIER;
                 int height_dimension = CARD_HEI * RES_MULTIPLIER;
 
@@ -63,14 +69,28 @@ namespace CGS_DeckGenerator
 
                 using (Bitmap createdBitmap = new Bitmap(width_dimension * HOR_NUM, height_dimension * VER_NUM))
                 {
-
                     using (Graphics deckImage = Graphics.FromImage(createdBitmap))
                     {
                         for (int v = 0; v < VER_NUM; ++v)
                         {
                             for (int h = 0; h < HOR_NUM; ++h)
                             {
-                                deckImage.FillRectangle(Brushes.Green, new Rectangle(v * width_dimension, h * height_dimension, width_dimension, height_dimension));
+                                //Get deck index
+                                deckIndx = (v * HOR_NUM) + h;
+
+                                //Back Fill
+                                deckImage.FillRectangle(Brushes.Black, new Rectangle(v * width_dimension, h * height_dimension, width_dimension, height_dimension));
+
+                                //Border
+                                borderBrush = GetBorderBrush(Deck[deckIndx].Grouping);
+                                deckImage.FillRectangle(Brushes.Green, 
+                                    new Rectangle(v * width_dimension, h * height_dimension + border, width_dimension, border)); //top
+                                deckImage.FillRectangle(Brushes.White,
+                                    new Rectangle(v * width_dimension, h * height_dimension + border, border, height_dimension)); //left
+                                deckImage.FillRectangle(Brushes.Yellow,
+                                    new Rectangle(v * width_dimension, h * height_dimension + border, width_dimension, height_dimension)); //right
+                                deckImage.FillRectangle(Brushes.Blue,
+                                    new Rectangle(v * width_dimension, h * height_dimension + border, width_dimension, height_dimension)); //bottom
                             }
                         }
                     }
@@ -83,9 +103,25 @@ namespace CGS_DeckGenerator
                 Console.WriteLine("Issue while trying to draw the deck: " + ex.ToString());
             }
         }
+
+        public Brush GetBorderBrush(string grouping)
+        {
+            Brush groupingBrush = Brushes.Black;
+
+            switch (grouping)
+            {
+                case "Common":
+                    break;
+                default:
+                    Console.WriteLine("Found unexpected grouping item: " + grouping);
+                    break;
+            }
+
+            return groupingBrush;
+        }
     }
 
-    class CardItem
+    public class CardItem
     {
         public string Name;
         public string Effect;
