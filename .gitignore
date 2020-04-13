@@ -350,8 +350,8 @@ MigrationBackup/
 .ionide/
 
 # PNG files
-.png
+*.png
 
 # GoogleSheet Items
-/token.json/*
-/credentials.json
+*/token.json/*
+*/credentials.json
