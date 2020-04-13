@@ -63,8 +63,8 @@ namespace CGS_DeckGenerator
                 Brush borderBrush;
 
                 Font nameFont = new Font("Arial", 16, FontStyle.Bold);
-                Font effectFont = new Font("Arial", 14, FontStyle.Bold);
-                Font flavorFont = new Font("Arial", 10, FontStyle.Bold);
+                Font effectFont = new Font("Arial", 14, FontStyle.Regular);
+                Font flavorFont = new Font("Arial", 10, FontStyle.Italic);
 
                 int width_dimension = CARD_WID * RES_MULTIPLIER;
                 int height_dimension = CARD_HEI * RES_MULTIPLIER;
