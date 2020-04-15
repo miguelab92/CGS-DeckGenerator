@@ -60,6 +60,9 @@ namespace CGS_DeckGenerator
                 Font nameFont = new Font("Arial", 16, FontStyle.Bold);
                 Font effectFont = new Font("Arial", 14, FontStyle.Regular);
                 Font flavorFont = new Font("Arial", 10, FontStyle.Italic);
+                Font groupingFont = new Font("Arial", 10, FontStyle.Underline);
+
+                StringFormat rightAlignment = new StringFormat() { Alignment = StringAlignment.Far };
 
                 int width_dimension = CARD_WID * RES_MULTIPLIER;
                 int height_dimension = CARD_HEI * RES_MULTIPLIER;
@@ -146,6 +149,13 @@ namespace CGS_DeckGenerator
                                         width_dimension - (border * 4), (height_dimension / 2) - (border * 3)
                                         );
                                     deckImage.DrawString(Deck[deckIndx].Flavor, flavorFont, Brushes.White, eventRectangle);
+
+                                    //Write Grouping
+                                    RectangleF groupingrectangle = new RectangleF(
+                                        (h * width_dimension), ((v + 1) * height_dimension) - (border * 2), 
+                                        width_dimension - (int)(border * 1.5), border
+                                        );
+                                    deckImage.DrawString(Deck[deckIndx].Grouping, groupingFont, Brushes.White, groupingrectangle, rightAlignment);
                                 }
                             }
                         }
@@ -180,7 +190,10 @@ namespace CGS_DeckGenerator
                     groupingBrush = Brushes.Purple;
                     break;
                 //Research
-                case "Active":
+                case "Active/Round":
+                    groupingBrush = Brushes.Red;
+                    break;
+                case "Active/Turn":
                     groupingBrush = Brushes.Orange;
                     break;
                 case "Passive":
@@ -188,10 +201,10 @@ namespace CGS_DeckGenerator
                     break;
                 //Event
                 case "Instant":
-                    groupingBrush = Brushes.Yellow;
+                    groupingBrush = Brushes.RosyBrown;
                     break;
                 case "On-Going":
-                    groupingBrush = Brushes.Red;
+                    groupingBrush = Brushes.Teal;
                     break;
                 default:
                     Console.WriteLine("Found unexpected grouping item: " + grouping);
