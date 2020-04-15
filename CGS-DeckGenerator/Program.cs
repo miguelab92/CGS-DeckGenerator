@@ -18,36 +18,31 @@ namespace CGS_DeckGenerator
             {
                 //All the decks
                 DeckItem resourceDeck = new DeckItem();
-                DeckItem researchDeck = new DeckItem();
+                DeckItem technologyDeck = new DeckItem();
                 DeckItem eventDeck = new DeckItem();
 
                 //Path to project
-                string projectPath = AssemblyDirectory.Replace(@"bin\Debug", "");
+                string projectPath = AssemblyDirectory.Replace(@"\bin", "").Replace(@"\Debug", "") + '\\';
 
                 //Read Google SpreadSheet
-                if (ReadSpreadSheet(ref resourceDeck, ref researchDeck, ref eventDeck, projectPath))
+                if (ReadSpreadSheet(ref resourceDeck, ref technologyDeck, ref eventDeck, projectPath))
                 {
                     //Attempt to draw the cards
                     Console.WriteLine("Finished reading spreadsheet. Attempting to draw deck");
 
-                    resourceDeck.DrawDeck(new FileInfo(projectPath + "resourceDeck.png"));
-                    researchDeck.DrawDeck(new FileInfo(projectPath + "researchDeck.png"));
-                    eventDeck.DrawDeck(new FileInfo(projectPath + "eventDeck.png"));
+                    resourceDeck.DrawDeck(projectPath, "Resource Deck");
+                    technologyDeck.DrawDeck(projectPath, "Technology Deck");
+                    eventDeck.DrawDeck(projectPath, "Event Deck");
 
                     Console.WriteLine("Finished drawing all decks");
-                }
-                else
-                {
-                    Console.WriteLine("Failure point found. Exiting");
                 }
             }
             catch (Exception ex)
             {
                 Console.WriteLine("Unexpected error: " + ex.ToString());
+                Console.WriteLine("Press any key to finish...");
+                Console.Read();
             }
-
-            Console.WriteLine("Press any key to finish...");
-            Console.Read();
         }
 
         static private bool ReadSpreadSheet(ref DeckItem rscDeck, ref DeckItem rhDeck, ref DeckItem evDeck, string projectPath)
@@ -83,20 +78,20 @@ namespace CGS_DeckGenerator
                 string spreadsheetId = "12kuqGt0t8tgm2-dP2C4qKVbbUm0R-RZ7uu75JmcAnuE";
 
                 string resourceRange = "Resource!A2:D";
-                string researchRange = "Research!A2:D";
-                string eventRange = "Event!A2:C"; //Only first three columns, there is no grouping
+                string technologyRange = "Technology!A2:D";
+                string eventRange = "Event!A2:D"; //Only first three columns, there is no grouping
 
                 //Gather the information and fill the three decks
-                rscDeck.GatherSpreadSheetData(ref service, spreadsheetId, resourceRange, true);
-                rhDeck.GatherSpreadSheetData(ref service, spreadsheetId, researchRange, true);
-                evDeck.GatherSpreadSheetData(ref service, spreadsheetId, eventRange, false);
+                rscDeck.GatherSpreadSheetData(ref service, spreadsheetId, resourceRange);
+                rhDeck.GatherSpreadSheetData(ref service, spreadsheetId, technologyRange);
+                evDeck.GatherSpreadSheetData(ref service, spreadsheetId, eventRange);
 
                 //We haven't crashed so assume we're good
                 readSpreadSheet = true;
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Issue with reading the spreadsheet: " + ex.ToString());
+                throw new Exception("Issue with reading the spreadsheet: " + ex.ToString());
             }
 
             return readSpreadSheet;

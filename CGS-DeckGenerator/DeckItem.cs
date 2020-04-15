@@ -24,7 +24,7 @@ namespace CGS_DeckGenerator
             Deck = new List<CardItem>();
         }
 
-        public void GatherSpreadSheetData(ref SheetsService service, string spreadsheetId, string range, bool containsGrouping)
+        public void GatherSpreadSheetData(ref SheetsService service, string spreadsheetId, string range)
         {
             Console.WriteLine("Reading range: " + range);
 
@@ -35,15 +35,10 @@ namespace CGS_DeckGenerator
             IList<IList<Object>> values = response.Values;
             if (values != null && values.Count > 0)
             {
-                Console.WriteLine("Building CardItems. Contains Grouping? " + containsGrouping);
+                Console.WriteLine("Building CardItems.");
                 foreach (IList<Object> column in values)
                 {
-                    CardItem tempCard = new CardItem(column[0].ToString(), column[1].ToString(), column[2].ToString());
-                    if (containsGrouping)
-                    {
-                        tempCard.Grouping = column[3].ToString();
-                    }
-                    Deck.Add(tempCard);
+                    Deck.Add(new CardItem(column[0].ToString(), column[1].ToString(), column[2].ToString(), column[3].ToString()));
                 }
             }
             else
@@ -52,7 +47,7 @@ namespace CGS_DeckGenerator
             }
         }
 
-        public void DrawDeck(FileInfo pathing)
+        public void DrawDeck(string projectPath, string deckType)
         {
             try
             {
@@ -68,78 +63,95 @@ namespace CGS_DeckGenerator
 
                 int width_dimension = CARD_WID * RES_MULTIPLIER;
                 int height_dimension = CARD_HEI * RES_MULTIPLIER;
+                
+                Console.WriteLine("Attempting to draw deck " + deckType);
 
-                if (Deck.Count <= MAX_CARDS)
+                using (Bitmap createdBitmap = new Bitmap(width_dimension * HOR_NUM, height_dimension * VER_NUM))
                 {
-                    Console.WriteLine("Attempting to draw deck " + pathing.Name);
-
-                    using (Bitmap createdBitmap = new Bitmap(width_dimension * (HOR_NUM + 1), height_dimension * (VER_NUM + 1)))
+                    using (Graphics deckImage = Graphics.FromImage(createdBitmap))
                     {
-                        using (Graphics deckImage = Graphics.FromImage(createdBitmap))
+                        //Vertical
+                        for (int v = 0; v < VER_NUM; ++v)
                         {
-                            //Vertical
-                            for (int v = 0; v < VER_NUM; ++v)
+                            //Horizontal
+                            for (int h = 0; h < HOR_NUM; ++h)
                             {
-                                //Horizontal
-                                for (int h = 0; h < HOR_NUM; ++h)
+                                //Get deck index
+                                deckIndx = (v * HOR_NUM) + h;
+
+                                if (deckIndx == MAX_CARDS)
                                 {
-                                    //Get deck index
-                                    deckIndx = (v * HOR_NUM) + h;
+                                    string backImagePath = projectPath + deckType + " - Back.png";
 
-                                    if (deckIndx < Deck.Count)
+                                    if (File.Exists(backImagePath))
                                     {
-                                        //Back Fill
-                                        deckImage.FillRectangle(Brushes.Black, new Rectangle(h * width_dimension, v * height_dimension, width_dimension, height_dimension));
+                                        SolidBrush brush = new SolidBrush(System.Drawing.Color.Black);
 
-                                        //Border
-                                        borderBrush = GetBorderBrush(Deck[deckIndx].Grouping);
+                                        //Copy the bitmap into the last spot
+                                        Bitmap originalImage = new Bitmap(backImagePath);
 
-                                        deckImage.FillRectangle(borderBrush,
-                                            new Rectangle(h * width_dimension, v * height_dimension, width_dimension, border)); //top
-                                        deckImage.FillRectangle(borderBrush,
-                                            new Rectangle(h * width_dimension, v * height_dimension, border, height_dimension)); //left
-                                        deckImage.FillRectangle(borderBrush,
-                                            new Rectangle(((h + 1) * width_dimension) - border, v * height_dimension, border, height_dimension)); //right
-                                        deckImage.FillRectangle(borderBrush,
-                                            new Rectangle(h * width_dimension, ((v + 1) * height_dimension) - border, width_dimension, border)); //bottom
+                                        float scale = Math.Min((float)width_dimension / originalImage.Width, (float)height_dimension / originalImage.Height);
 
-                                        //Image Fill
-                                        deckImage.FillRectangle(Brushes.White,
-                                            new Rectangle((h * width_dimension) + (border * 2), (v * height_dimension) + (border * 3),
-                                            width_dimension - (border * 4), (height_dimension / 2) - (border * 3)));
+                                        int scaleWidth = (int)(originalImage.Width * scale);
+                                        int scaleHeight = (int)(originalImage.Height * scale);
 
-                                        //Write Name
-                                        RectangleF nameRectangle = new RectangleF(
-                                            (h * width_dimension) + (border * 2), (v * height_dimension) + (border * 3 / 2),
-                                            width_dimension - (border * 4), (height_dimension / 2) - (border * 3)
-                                            );
-                                        deckImage.DrawString(Deck[deckIndx].Name, nameFont, Brushes.White, nameRectangle);
-
-                                        //Write Effect
-                                        RectangleF effectRectangle = new RectangleF(
-                                            (h * width_dimension) + (border * 2), (v * height_dimension) + (height_dimension / 2) + border,
-                                            width_dimension - (border * 4), (height_dimension / 2) - (border * 3)
-                                            );
-                                        deckImage.DrawString(Deck[deckIndx].Effect, effectFont, Brushes.White, effectRectangle);
-
-                                        //Write Flavor
-                                        RectangleF eventRectangle = new RectangleF(
-                                            (h * width_dimension) + (border * 2), ((v + 1) * height_dimension) - (border * 4),
-                                            width_dimension - (border * 4), (height_dimension / 2) - (border * 3)
-                                            );
-                                        deckImage.DrawString(Deck[deckIndx].Flavor, flavorFont, Brushes.White, eventRectangle);
+                                        deckImage.FillRectangle(brush, new RectangleF(h * width_dimension, v * height_dimension, width_dimension, height_dimension));
+                                        deckImage.DrawImage(originalImage, h * width_dimension, v * height_dimension, scaleWidth, scaleHeight);
                                     }
+                                    else
+                                    {
+                                        Console.WriteLine("Unable to find the back of the deck image. Path searched: " + backImagePath);
+                                        deckImage.FillRectangle(Brushes.Black, new Rectangle(h * width_dimension, v * height_dimension, width_dimension, height_dimension));
+                                    }
+                                }                               
+                                else if (deckIndx < Deck.Count)
+                                {
+                                    //Back Fill
+                                    deckImage.FillRectangle(Brushes.Black, new Rectangle(h * width_dimension, v * height_dimension, width_dimension, height_dimension));
+
+                                    //Border
+                                    borderBrush = GetBorderBrush(Deck[deckIndx].Grouping);
+
+                                    deckImage.FillRectangle(borderBrush,
+                                        new Rectangle(h * width_dimension, v * height_dimension, width_dimension, border)); //top
+                                    deckImage.FillRectangle(borderBrush,
+                                        new Rectangle(h * width_dimension, v * height_dimension, border, height_dimension)); //left
+                                    deckImage.FillRectangle(borderBrush,
+                                        new Rectangle(((h + 1) * width_dimension) - border, v * height_dimension, border, height_dimension)); //right
+                                    deckImage.FillRectangle(borderBrush,
+                                        new Rectangle(h * width_dimension, ((v + 1) * height_dimension) - border, width_dimension, border)); //bottom
+
+                                    //Image Fill
+                                    deckImage.FillRectangle(Brushes.White,
+                                        new Rectangle((h * width_dimension) + (border * 2), (v * height_dimension) + (border * 3),
+                                        width_dimension - (border * 4), (height_dimension / 2) - (border * 3)));
+
+                                    //Write Name
+                                    RectangleF nameRectangle = new RectangleF(
+                                        (h * width_dimension) + (border * 2), (v * height_dimension) + (border * 3 / 2),
+                                        width_dimension - (border * 4), (height_dimension / 2) - (border * 3)
+                                        );
+                                    deckImage.DrawString(Deck[deckIndx].Name, nameFont, Brushes.White, nameRectangle);
+
+                                    //Write Effect
+                                    RectangleF effectRectangle = new RectangleF(
+                                        (h * width_dimension) + (border * 2), (v * height_dimension) + (height_dimension / 2) + border,
+                                        width_dimension - (border * 4), (height_dimension / 2) - (border * 3)
+                                        );
+                                    deckImage.DrawString(Deck[deckIndx].Effect, effectFont, Brushes.White, effectRectangle);
+
+                                    //Write Flavor
+                                    RectangleF eventRectangle = new RectangleF(
+                                        (h * width_dimension) + (border * 2), ((v + 1) * height_dimension) - (border * 4),
+                                        width_dimension - (border * 4), (height_dimension / 2) - (border * 3)
+                                        );
+                                    deckImage.DrawString(Deck[deckIndx].Flavor, flavorFont, Brushes.White, eventRectangle);
                                 }
                             }
                         }
-
-                        createdBitmap.Save(pathing.FullName);
                     }
-                }
-                else
-                {
-                    //We'll cross this bridge when we get there
-                    Console.WriteLine("Unable to continue, deck is larger than expected max");
+
+                    createdBitmap.Save(projectPath + deckType + ".png");
                 }
             }
             catch (Exception ex)
@@ -154,10 +166,6 @@ namespace CGS_DeckGenerator
 
             switch (grouping)
             {
-                //Event
-                case "":
-                    groupingBrush = Brushes.Yellow;
-                    break;
                 //Resources
                 case "Common":
                     groupingBrush = Brushes.White;
@@ -177,6 +185,13 @@ namespace CGS_DeckGenerator
                     break;
                 case "Passive":
                     groupingBrush = Brushes.Gray;
+                    break;
+                //Event
+                case "Instant":
+                    groupingBrush = Brushes.Yellow;
+                    break;
+                case "On-Going":
+                    groupingBrush = Brushes.Red;
                     break;
                 default:
                     Console.WriteLine("Found unexpected grouping item: " + grouping);
